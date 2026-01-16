@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TOS - Live Stream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1e2833;
+            color: white;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #4CAF50;
+            margin: 0;
+        }
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        .video-section {
+            flex: 3;
+            background-color: #2e3b4e;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .controls-section {
+            flex: 1;
+            background-color: #2e3b4e;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .video-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #videoFeed {
+            width: 100%;
+            max-width: 1000px;
+            height: 600px;
+            border: 2px solid #4CAF50;
+            background-color: black;
+            object-fit: contain;
+        }
+        .status {
+            background-color: #3f4c5e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .session-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .session-card {
+            background-color: #283038;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4CAF50;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #5d7591;
+            border-radius: 5px;
+            background-color: #1e2833;
+            color: white;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-start {
+            background-color: #4CAF50;
+        }
+        .btn-stop {
+            background-color: #C0392B;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .dashboard {
+            margin-top: 20px;
+            background-color: #2e3b4e;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: white;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        th {
+            background-color: #3f4c5e;
+            color: #4CAF50;
+        }
+        tr:hover {
+            background-color: #3a475a;
+        }
+        .view-btn {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 3px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .view-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Target Observation System (TOS) - Live Analysis</h1>
+        </div>
+        
+        <div class="main-content">
+            <div class="video-section">
+                <div class="video-container">
+                    <img id="videoFeed" src="" alt="Live Camera Feed">
+                </div>
+                
+                <div class="status" id="status">
+                    Status: Connecting...
+                </div>
+                
+                <div class="session-info" id="sessionInfo">
+                    <div class="session-card">
+                        <h3>Current Session</h3>
+                        <p>Active Session: <span id="currentSession">None</span></p>
+                        <p>Active Hits: <span id="activeHits">0</span></p>
+                    </div>
+                    <div class="session-card">
+                        <h3>System Status</h3>
+                        <p>Total Sessions: <span id="totalSessions">0</span></p>
+                        <p>Connection: <span id="connectionStatus">Disconnected</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls-section">
+                <h3>Session Controls</h3>
+                
+                <div class="form-group">
+                    <label for="serviceInput">Service No (SN):</label>
+                    <input type="text" id="serviceInput" placeholder="Enter Service Number">
+                </div>
+
+                <div class="form-group">
+                    <label for="nameInput">Shooter Name:</label>
+                    <input type="text" id="nameInput" placeholder="Enter Shooter Name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="yearInput">Service Year (SY):</label>
+                    <input type="text" id="yearInput" placeholder="Enter Service Year">
+                </div>
+                
+                <button class="btn btn-start" id="startBtn">🚀 Start Session</button>
+                <button class="btn btn-stop" id="stopBtn">🛑 Stop Session</button>
+                
+                <div class="dashboard">
+                    <h3>Session History</h3>
+                    <table id="sessionTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Service No</th>
+                                <th>Service Year</th>
+                                <th>Hits</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        const socket = new WebSocket('ws://' + window.location.host + '/ws');
+        
+        // DOM Elements
+        const videoFeed = document.getElementById('videoFeed');
+        const status = document.getElementById('status');
+        const currentSession = document.getElementById('currentSession');
+        const activeHits = document.getElementById('activeHits');
+        const totalSessions = document.getElementById('totalSessions');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const sessionTable = document.getElementById('sessionTable').getElementsByTagName('tbody')[0];
+        
+        // Form elements
+        const nameInput = document.getElementById('nameInput');
+        const serviceInput = document.getElementById('serviceInput');
+        const yearInput = document.getElementById('yearInput');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        
+        // WebSocket event handlers
+        socket.onopen = function(event) {
+            connectionStatus.textContent = 'Connected';
+            status.textContent = 'Status: Connected';
+        };
+        
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'video_frame') {
+                // Update video feed
+                if (data.data && data.data.length > 0) {
+                    videoFeed.src = 'data:image/jpeg;base64,' + data.data;
+                }
+            } else if (data.type === 'session_update') {
+                // Update session info
+                currentSession.textContent = data.data.current_session !== -1 ? data.data.current_session : 'None';
+                activeHits.textContent = data.data.active_hits;
+                totalSessions.textContent = data.data.total_sessions;
+                
+                // Update session table only if session has ended
+                if (data.data.current_session === -1) {
+                    updateSessionTable();
+                }
+            }
+        };
+        
+        socket.onclose = function(event) {
+            connectionStatus.textContent = 'Disconnected';
+            status.textContent = 'Status: Disconnected';
+        };
+        
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            status.textContent = 'Status: Connection Error';
+        };
+        
+        // Button event handlers
+        startBtn.addEventListener('click', function() {
+            const name = nameInput.value.trim();
+            const service = serviceInput.value.trim();
+            const year = yearInput.value.trim();
+            
+            if (!name || !service || !year) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            fetch('/start_session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    service_no: service,
+                    service_year: year
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    status.textContent = `Status: Session '${name}' started`;
+                    nameInput.value = '';
+                    serviceInput.value = '';
+                    yearInput.value = '';
+                }
+            });
+        });
+
+        stopBtn.addEventListener('click', function() {
+            fetch('/stop_session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    status.textContent = `Status: Hits: ${data.hits}, Group: ${data.group_size.toFixed(2)} in`;
+                    updateSessionTable();
+                } else {
+                    status.textContent = `Status: ${data.message}`;
+                }
+            });
+        });        
+        
+        function updateSessionTable() {
+            // Clear existing rows
+            sessionTable.innerHTML = '';
+            
+            fetch('/dashboard')
+            .then(response => response.json())
+            .then(data => {
+                // Access the all_sessions array from the response
+                const sessions = data.all_sessions;
+                
+                sessions.forEach((session, index) => {
+                    const row = sessionTable.insertRow();
+                    row.insertCell(0).textContent = session.name;
+                    row.insertCell(1).textContent = session.service_no;
+                    row.insertCell(2).textContent = session.service_year;
+                    row.insertCell(3).textContent = session.hits;
+                    
+                    // Add View Report button
+                    const viewBtn = document.createElement('button');
+                    viewBtn.textContent = 'View Report';
+                    viewBtn.className = 'view-btn';
+                    viewBtn.onclick = function() {
+                        // Open report in new tab/window
+                        window.open(`/report/${index}`, '_blank');
+                    };
+                    const cell = row.insertCell(4);
+                    cell.appendChild(viewBtn);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading sessions:', error);
+            });
+        }
+        
+        // Load sessions when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSessionTable();
+        });
+    </script>
+</body>
+</html>
